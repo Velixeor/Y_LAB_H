@@ -3,6 +3,9 @@ package org.example;
 
 import org.example.manager.*;
 import org.example.repository.*;
+import org.example.runners.DataBaseRunner;
+import org.example.runners.DockerComposeRunner;
+import org.example.runners.LiquiBaseRunner;
 import org.example.service.*;
 
 import java.util.Scanner;
@@ -16,6 +19,15 @@ public class Main {
     private static AuditService auditService;
 
     public static void main(String[] args) {
+        DockerComposeRunner.run();
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        DataBaseRunner.run();
+        LiquiBaseRunner.run();
+
         Scanner scanner = new Scanner(System.in);
         userService = new UserService(new UserRepository());
         carService = new CarService(new CarRepository());
@@ -23,7 +35,7 @@ public class Main {
         administrativeOrderService = new AdministrativeOrderService(new AdministrativeOrderRepository());
         auditService = new AuditService(new AuditRepository());
 
-        UserManager userManager = new UserManager(userService);
+        UserManager userManager = new UserManager(userService, auditService);
         CarManager carManager = new CarManager(carService, auditService);
         OrderBuyManager orderManager = new OrderBuyManager(orderBuyService, auditService);
         AdministrativeOrderManager administrativeOrderManager = new AdministrativeOrderManager(administrativeOrderService, auditService);

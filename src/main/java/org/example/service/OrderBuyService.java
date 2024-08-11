@@ -10,32 +10,31 @@ import java.util.Optional;
 
 public class OrderBuyService {
     private OrderBuyRepository orderBuyRepository;
-    private int id;
+
 
     public OrderBuyService(OrderBuyRepository orderRepository) {
         this.orderBuyRepository = orderRepository;
     }
 
     public void addOrder(OrderBuy order) {
-        order.setId(id);
-        id++;
-        orderBuyRepository.addOrder(order);
+
+        orderBuyRepository.save(order);
     }
 
     public Optional<OrderBuy> getOrderById(int id) {
-        return orderBuyRepository.getOrderById(id);
+        return orderBuyRepository.findById(id);
     }
 
     public List<OrderBuy> getAllOrders() {
-        return orderBuyRepository.getAllOrders();
+        return orderBuyRepository.findAll();
     }
 
-    public boolean updateOrder(OrderBuy updatedOrder) {
-        return orderBuyRepository.updateOrder(updatedOrder);
+    public OrderBuy updateOrder(OrderBuy updatedOrder) {
+        return orderBuyRepository.update(updatedOrder);
     }
 
-    public boolean deleteOrder(int id) {
-        return orderBuyRepository.deleteOrder(id);
+    public void deleteOrder(int id) {
+         orderBuyRepository.deleteById(id);
     }
 
     public List<OrderBuy> searchOrdersByUserIdAndCarID(Integer idUser,Integer idCar) {

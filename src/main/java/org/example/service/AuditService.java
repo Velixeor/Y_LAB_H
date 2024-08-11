@@ -13,21 +13,27 @@ import java.util.List;
 
 public class AuditService {
     AuditRepository auditRepository;
-    private int id;
+    private Integer authid;
 
     public AuditService(AuditRepository auditRepository) {
         this.auditRepository = auditRepository;
-        id=0;
+        authid=-1;
+    }
+    public void SetAuthId(Integer id){
+        authid=id;
+    }
+    public Integer GetAuthId(){
+        return authid;
     }
 
-    public void addAction(String action, String username) {
-        Audit auditLog = new Audit(id,action,username, LocalDateTime.now());
-        id++;
-        auditRepository.addAuditLog(auditLog);
+    public void addAction(String action) {
+        Audit auditLog = new Audit(1,action,LocalDateTime.now(),authid);
+
+        auditRepository.save(auditLog);
     }
 
     public List<Audit> getAllLogs() {
-        return auditRepository.getAllAudit();
+        return auditRepository.findAll();
     }
 
     public void exportAudit(String filename) {
@@ -51,6 +57,6 @@ public class AuditService {
 
 
     private String formatAudit(Audit log) {
-        return String.format("%s,%s,%s,%s", log.getId(), log.getUsername(), log.getAction(), log.getTimestamp());
+        return String.format("%s,%s,%s,%s", log.getId(), log.getAction(), log.getTimestamp(),log.getUserID());
     }
 }

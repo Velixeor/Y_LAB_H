@@ -2,9 +2,10 @@ package org.example.manager;
 
 
 import org.example.entity.OrderBuy;
+import org.example.entity.Status;
 import org.example.service.AuditService;
 import org.example.service.OrderBuyService;
-import org.example.entity.Status;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.Scanner;
@@ -28,6 +29,10 @@ public class OrderBuyManager {
         System.out.println("3. Удалить заказ");
         System.out.println("4. Просмотреть все заказы");
         System.out.print("Выберите действие: ");
+        if(auditService.GetAuthId()==-1){
+            System.out.println("Вы не авторизованны");
+            return;
+        }
         String choice = scanner.nextLine();
 
         switch (choice) {
@@ -58,11 +63,11 @@ public class OrderBuyManager {
                 "    ready: ");
         String statusS = scanner.nextLine();
         Status status = Status.valueOf(statusS);
-        OrderBuy order = new OrderBuy( carId, userID, status);
-        if(orderBuyService.searchOrdersByUserIdAndCarID(userID,carId).isEmpty()) {
+        OrderBuy order = new OrderBuy(carId, userID, status);
+        if (orderBuyService.searchOrdersByUserIdAndCarID(userID, carId).isEmpty()) {
             orderBuyService.addOrder(order);
         }
-        auditService.addAction("Создание заказа", "admin");
+        auditService.addAction("Создание заказа");
         System.out.println("Заказ создан.");
     }
 
@@ -75,7 +80,7 @@ public class OrderBuyManager {
             System.out.print("Новый статус заказа: ");
             orderBuy.setStatus(Status.valueOf(scanner.nextLine()));
             orderBuyService.updateOrder(orderBuy);
-            auditService.addAction("Редактирование заказа", "admin");
+            auditService.addAction("Редактирование заказа");
             System.out.println("Заказ обновлен.");
         } else {
             System.out.println("Заказ не найден.");
@@ -85,12 +90,10 @@ public class OrderBuyManager {
     private void deleteOrder(Scanner scanner) {
         System.out.print("ID заказа: ");
         int orderIdToDelete = Integer.parseInt(scanner.nextLine());
-        if (orderBuyService.deleteOrder(orderIdToDelete)) {
-            auditService.addAction("Удаление заказа", "admin");
-            System.out.println("Заказ удален.");
-        } else {
-            System.out.println("Заказ не найден.");
-        }
+        orderBuyService.deleteOrder(orderIdToDelete);
+        auditService.addAction("Удаление заказа");
+        System.out.println("Заказ удален.");
+
     }
 
     private void viewAllOrders() {

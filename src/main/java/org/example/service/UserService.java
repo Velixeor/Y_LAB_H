@@ -10,40 +10,35 @@ import java.util.Optional;
 
 public class UserService {
     private UserRepository userRepository;
-    private int id;
+
     public UserService(UserRepository userRepository) {
         this.userRepository = userRepository;
-        id=0;
+
     }
 
     public void registerUser(User user) {
-        user.setId(id);
-        id++;
-        userRepository.addUser(user);
+
+        userRepository.save(user);
 
     }
 
-    public boolean authenticateUser(String username, String password) {
-        Optional<User> userOpt = userRepository.getUserByUsernameAndPassword(username,password);
-        if (userOpt.isPresent()) {
-            return true;
-        }
-        return false;
+    public Integer authenticateUser(String username, String password) {
+        return userRepository.getUserByUsernameAndPassword(username,password);
     }
 
-    public boolean updateUser(User updatedUser) {
-        return userRepository.updateUser(updatedUser);
+    public User updateUser(User updatedUser) {
+        return userRepository.update(updatedUser);
     }
 
-    public boolean deleteUser(String username) {
-        return userRepository.deleteUser(username);
+    public void deleteUser(String username) {
+        userRepository.deleteByUsername(username);
     }
 
     public Optional<User> getUserById(Integer id) {
-        return userRepository.getUserById(id);
+        return userRepository.findById(id);
     }
 
     public List<User> getAllUsers() {
-        return userRepository.getAllUsers();
+        return userRepository.findAll();
     }
 }

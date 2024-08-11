@@ -28,6 +28,10 @@ public class AdministrativeOrderManager {
         System.out.println("3. Удалить заказ");
         System.out.println("4. Просмотреть все заказы");
         System.out.print("Выберите действие: ");
+        if(auditService.GetAuthId()==-1){
+            System.out.println("Вы не авторизованны");
+            return;
+        }
         String choice = scanner.nextLine();
 
         switch (choice) {
@@ -59,9 +63,15 @@ public class AdministrativeOrderManager {
         String serviceType = scanner.nextLine();
         System.out.print("Статус заказа: ");
         String status = scanner.nextLine();
+        System.out.print("Id клиента: ");
+        Integer userID = Integer.valueOf(scanner.nextLine());
+        System.out.print("Id автомобиля: ");
+        Integer carID = Integer.valueOf(scanner.nextLine());
         AdministrativeOrder administrativeOrder =new AdministrativeOrder(carBrand,carModel,username, Service.valueOf(serviceType),Status.valueOf(status));
+        administrativeOrder.setUserID(userID);
+        administrativeOrder.setCarID(carID);
         administrativeOrderService.addAdministrativeOrder(administrativeOrder);
-        auditService.addAction("Создание заказа на обслуживание", "admin");
+        auditService.addAction("Создание заказа на обслуживание");
         System.out.println("Заказ на обслуживание создан.");
     }
 
@@ -84,7 +94,7 @@ public class AdministrativeOrderManager {
             administrativeOrder.setStatus(Status.valueOf(scanner.nextLine()));
 
             administrativeOrderService.updateAdministrativeOrder(administrativeOrder);
-            auditService.addAction("Редактирование заказа на обслуживание", "admin");
+            auditService.addAction("Редактирование заказа на обслуживание");
             System.out.println("Заказ на обслуживание обновлен.");
         } else {
             System.out.println("Заказ на обслуживание не найден.");
@@ -94,12 +104,10 @@ public class AdministrativeOrderManager {
     private void deleteServiceRequest(Scanner scanner) {
         System.out.print("ID заказ: ");
         int administrativeOrderDelete = Integer.parseInt(scanner.nextLine());
-        if (administrativeOrderService.deleteAdministrativeOrder(administrativeOrderDelete)) {
-            auditService.addAction("Удаление заказа на обслуживание", "admin");
-            System.out.println("Заказ на обслуживание удален.");
-        } else {
-            System.out.println("Заказ на обслуживание не найден.");
-        }
+        administrativeOrderService.deleteAdministrativeOrder(administrativeOrderDelete);
+        auditService.addAction("Удаление заказа на обслуживание");
+        System.out.println("Заказ на обслуживание удален.");
+
     }
 
     private void viewAllServiceRequests() {

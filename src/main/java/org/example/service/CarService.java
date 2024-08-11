@@ -11,32 +11,30 @@ import java.util.Optional;
 public class CarService {
 
     private CarRepository carRepository;
-    private int id;
+
     public CarService(CarRepository carRepository) {
         this.carRepository = carRepository;
-        id=0;
+
     }
 
     public void addCar(Car car) {
-        car.setId(id);
-        id++;
-        carRepository.addCar(car);
+        carRepository.save(car);
     }
 
     public Optional<Car> getCarById(int id) {
-        return carRepository.getCarById(id);
+        return carRepository.findById(id);
     }
 
     public List<Car> getAllCars() {
-        return carRepository.getAllCars();
+        return carRepository.findAll();
     }
 
-    public boolean updateCar(Car updatedCar) {
-        return carRepository.updateCar(updatedCar);
+    public Car updateCar(Car updatedCar) {
+        return carRepository.update(updatedCar);
     }
 
-    public boolean deleteCar(int id) {
-        return carRepository.deleteCar(id);
+    public void deleteCar(int id) {
+        carRepository.deleteById(id);
     }
 
     public List<Car> searchCarsByBrand(String brand) {

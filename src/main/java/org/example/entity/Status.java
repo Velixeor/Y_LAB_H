@@ -2,7 +2,7 @@ package org.example.entity;
 
 
 public enum Status {
-    inProcessing,
-    started,
-    ready
+    IN_PROCESSING,
+    STARTED,
+    READY
 }
