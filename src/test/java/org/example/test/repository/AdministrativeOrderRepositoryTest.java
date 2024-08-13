@@ -5,129 +5,185 @@ import org.example.entity.AdministrativeOrder;
 import org.example.entity.Service;
 import org.example.entity.Status;
 import org.example.repository.AdministrativeOrderRepository;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.MockitoAnnotations;
-
-
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.containers.PostgreSQLContainer;
+import java.sql.Connection;
+import java.sql.Statement;
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 
-public class AdministrativeOrderRepositoryTest {
-    @InjectMocks
+@Testcontainers
+class AdministrativeOrderRepositoryTest {
+
+    @Container
+    public PostgreSQLContainer<?> postgresContainer = new PostgreSQLContainer<>("postgres:15")
+            .withDatabaseName("test")
+            .withUsername("test")
+            .withPassword("test");
+
     private AdministrativeOrderRepository repository;
 
     @BeforeEach
-    public void setUp() {
-        MockitoAnnotations.openMocks(this);
+    void setUp() throws Exception {
+        DataBaseConnection.setDataSource(postgresContainer.getJdbcUrl(), postgresContainer.getUsername(), postgresContainer.getPassword());
+
+
+        try (Connection connection = DataBaseConnection.getConnection();
+             Statement statement = connection.createStatement()) {
+            statement.execute("CREATE SCHEMA IF NOT EXISTS car_shop");
+            statement.execute("CREATE TABLE IF NOT EXISTS car_shop.administrative_order (" +
+                    "id SERIAL PRIMARY KEY, " +
+                    "car_brand VARCHAR(255), " +
+                    "car_model VARCHAR(255), " +
+                    "username VARCHAR(255), " +
+                    "service_type VARCHAR(255), " +
+                    "status VARCHAR(255), " +
+                    "car_id INTEGER, " +
+                    "user_id INTEGER" +
+                    ")");
+        }
+
         repository = new AdministrativeOrderRepository();
     }
 
-    @Test
-    public void testAddAdministrativeOrder() {
-        AdministrativeOrder order = new AdministrativeOrder(1, "Toyota", "Camry", "user1", Service.repair, Status.inProcessing);
-        repository.addAdministrativeOrder(order);
-
-        List<AdministrativeOrder> orders = repository.getAllAdministrativeOrder();
-        assertThat(orders).contains(order);
+    @AfterEach
+    void tearDown() throws Exception {
+        try (Connection connection = DataBaseConnection.getConnection();
+             Statement statement = connection.createStatement()) {
+            statement.execute("DROP TABLE IF EXISTS car_shop.administrative_order");
+        }
     }
 
     @Test
-    public void testGetAllAdministrativeOrder() {
-        AdministrativeOrder order1 = new AdministrativeOrder(1, "Toyota", "Camry", "user1", Service.repair, Status.inProcessing);
-        AdministrativeOrder order2 = new AdministrativeOrder(2, "Honda", "Accord", "user2", Service.preventiveMaintenance, Status.ready);
-        repository.addAdministrativeOrder(order1);
-        repository.addAdministrativeOrder(order2);
+    @DisplayName("Должен сохранить новый административный заказ и вернуть его с присвоенным ID")
+    void saveAdministrativeOrder() {
+        AdministrativeOrder order = new AdministrativeOrder();
+        order.setCarBrand("Toyota");
+        order.setCarModel("Corolla");
+        order.setUsername("john_doe");
+        order.setServiceType(Service.REPAIR);
+        order.setStatus(Status.IN_PROCESSING);
+        order.setCarID(1);
+        order.setUserID(1);
 
-        List<AdministrativeOrder> orders = repository.getAllAdministrativeOrder();
-        assertThat(orders).containsExactlyInAnyOrder(order1, order2);
+        AdministrativeOrder savedOrder = repository.save(order);
+
+        assertThat(savedOrder).isNotNull();
+        assertThat(savedOrder.getId()).isNotNull();
     }
 
     @Test
-    public void testDeleteOrderService() {
-        AdministrativeOrder order = new AdministrativeOrder(1, "Toyota", "Camry", "user1", Service.repair, Status.inProcessing);
-        repository.addAdministrativeOrder(order);
+    @DisplayName("Должен найти административный заказ по ID")
+    void findAdministrativeOrderById() {
+        AdministrativeOrder order = new AdministrativeOrder();
+        order.setCarBrand("Honda");
+        order.setCarModel("Civic");
+        order.setUsername("jane_doe");
+        order.setServiceType(Service.PREVENTIVE_MAINTENANCE);
+        order.setStatus(Status.READY);
+        order.setCarID(2);
+        order.setUserID(2);
 
-        boolean deleted = repository.deleteOrderService(1);
-        List<AdministrativeOrder> orders = repository.getAllAdministrativeOrder();
+        AdministrativeOrder savedOrder = repository.save(order);
+        Optional<AdministrativeOrder> foundOrder = repository.findById(savedOrder.getId());
 
-        assertThat(deleted).isTrue();
-        assertThat(orders).doesNotContain(order);
-    }
-
-    @Test
-    public void testDeleteOrderServiceNotFound() {
-        boolean deleted = repository.deleteOrderService(1);
-        assertThat(deleted).isFalse();
-    }
-
-    @Test
-    public void testGetAdministrativeOrderById() {
-        AdministrativeOrder order = new AdministrativeOrder(1, "Toyota", "Camry", "user1", Service.repair, Status.inProcessing);
-        repository.addAdministrativeOrder(order);
-
-        Optional<AdministrativeOrder> foundOrder = repository.getAdministrativeOrderById(1);
         assertThat(foundOrder).isPresent();
-        assertThat(foundOrder.get()).isEqualTo(order);
+        assertThat(foundOrder.get().getCarBrand()).isEqualTo("Honda");
     }
 
     @Test
-    public void testGetAdministrativeOrderByIdNotFound() {
-        Optional<AdministrativeOrder> foundOrder = repository.getAdministrativeOrderById(1);
-        assertThat(foundOrder).isNotPresent();
+    @DisplayName("Должен обновить административный заказ и вернуть обновленный объект")
+    void updateAdministrativeOrder() {
+        AdministrativeOrder order = new AdministrativeOrder();
+        order.setCarBrand("Ford");
+        order.setCarModel("Focus");
+        order.setUsername("alex_smith");
+        order.setServiceType(Service.WASH);
+        order.setStatus(Status.IN_PROCESSING);
+        order.setCarID(3);
+        order.setUserID(3);
+
+        AdministrativeOrder savedOrder = repository.save(order);
+        savedOrder.setStatus(Status.READY);
+
+        AdministrativeOrder updatedOrder = repository.update(savedOrder);
+
+        assertThat(updatedOrder).isNotNull();
+        assertThat(updatedOrder.getStatus()).isEqualTo(Status.READY);
     }
 
     @Test
-    public void testUpdateAdministrativeOrder() {
-        AdministrativeOrder order = new AdministrativeOrder(1, "Toyota", "Camry", "user1", Service.repair, Status.inProcessing);
-        repository.addAdministrativeOrder(order);
+    @DisplayName("Должен удалить административный заказ по ID")
+    void deleteAdministrativeOrderById() {
+        AdministrativeOrder order = new AdministrativeOrder();
+        order.setCarBrand("Chevrolet");
+        order.setCarModel("Malibu");
+        order.setUsername("lisa_white");
+        order.setServiceType(Service.REPAIR);
+        order.setStatus(Status.IN_PROCESSING);
+        order.setCarID(4);
+        order.setUserID(4);
 
-        AdministrativeOrder updatedOrder = new AdministrativeOrder(1, "Toyota", "Corolla", "user1", Service.repair, Status.ready);
-        boolean updated = repository.updateAdministrativeOrder(updatedOrder);
+        AdministrativeOrder savedOrder = repository.save(order);
+        repository.deleteById(savedOrder.getId());
 
-        assertThat(updated).isTrue();
-        assertThat(repository.getAdministrativeOrderById(1)).isPresent()
-                .hasValueSatisfying(o -> {
-                    assertThat(o.getCarModel()).isEqualTo("Corolla");
-                    assertThat(o.getStatus()).isEqualTo(Status.ready);
-                });
+        Optional<AdministrativeOrder> deletedOrder = repository.findById(savedOrder.getId());
+
+        assertThat(deletedOrder).isEmpty();
     }
 
     @Test
-    public void testUpdateAdministrativeOrderNotFound() {
-        AdministrativeOrder updatedOrder = new AdministrativeOrder(1, "Toyota", "Corolla", "user1", Service.repair, Status.ready);
-        boolean updated = repository.updateAdministrativeOrder(updatedOrder);
+    @DisplayName("Должен найти административные заказы по имени пользователя")
+    void searchAdministrativeOrdersByCustomerUsername() {
+        AdministrativeOrder order1 = new AdministrativeOrder();
+        order1.setCarBrand("BMW");
+        order1.setCarModel("X5");
+        order1.setUsername("peter_parker");
+        order1.setServiceType(Service.REPAIR);
+        order1.setStatus(Status.IN_PROCESSING);
+        order1.setCarID(5);
+        order1.setUserID(5);
+        repository.save(order1);
 
-        assertThat(updated).isFalse();
+        AdministrativeOrder order2 = new AdministrativeOrder();
+        order2.setCarBrand("Audi");
+        order2.setCarModel("A4");
+        order2.setUsername("peter_parker");
+        order2.setServiceType(Service.PREVENTIVE_MAINTENANCE);
+        order2.setStatus(Status.READY);
+        order2.setCarID(6);
+        order2.setUserID(6);
+        repository.save(order2);
+
+        List<AdministrativeOrder> orders = repository.searchAdministrativeOrdersByCustomerUsername("peter_parker");
+
+        assertThat(orders).hasSize(2);
     }
 
     @Test
-    public void testSearchAdministrativeOrdersByCustomerUsername() {
-        AdministrativeOrder order1 = new AdministrativeOrder(1, "Toyota", "Camry", "user1", Service.repair, Status.inProcessing);
-        AdministrativeOrder order2 = new AdministrativeOrder(2, "Honda", "Accord", "user2", Service.preventiveMaintenance, Status.ready);
-        AdministrativeOrder order3 = new AdministrativeOrder(3, "Ford", "Fusion", "user1", Service.repair, Status.inProcessing);
-        repository.addAdministrativeOrder(order1);
-        repository.addAdministrativeOrder(order2);
-        repository.addAdministrativeOrder(order3);
+    @DisplayName("Должен найти административные заказы по статусу")
+    void searchAdministrativeOrdersByStatus() {
+        AdministrativeOrder order = new AdministrativeOrder();
+        order.setCarBrand("Mercedes");
+        order.setCarModel("C-Class");
+        order.setUsername("bruce_wayne");
+        order.setServiceType(Service.REPAIR);
+        order.setStatus(Status.READY);
+        order.setCarID(7);
+        order.setUserID(7);
+        repository.save(order);
 
-        List<AdministrativeOrder> orders = repository.searchAdministrativeOrdersByCustomerUsername("user1");
-        assertThat(orders).containsExactlyInAnyOrder(order1, order3);
-    }
+        List<AdministrativeOrder> orders = repository.searchAdministrativeOrdersByStatus(Status.READY);
 
-    @Test
-    public void testSearchAdministrativeOrdersByStatus() {
-        AdministrativeOrder order1 = new AdministrativeOrder(1, "Toyota", "Camry", "user1", Service.repair, Status.inProcessing);
-        AdministrativeOrder order2 = new AdministrativeOrder(2, "Honda", "Accord", "user2", Service.preventiveMaintenance, Status.ready);
-        AdministrativeOrder order3 = new AdministrativeOrder(3, "Ford", "Fusion", "user1", Service.repair, Status.inProcessing);
-        repository.addAdministrativeOrder(order1);
-        repository.addAdministrativeOrder(order2);
-        repository.addAdministrativeOrder(order3);
-
-        List<AdministrativeOrder> orders = repository.searchAdministrativeOrdersByStatus(Status.inProcessing);
-        assertThat(orders).containsExactlyInAnyOrder(order1, order3);
+        assertThat(orders).hasSize(1);
+        assertThat(orders.get(0).getUsername()).isEqualTo("bruce_wayne");
     }
 }

@@ -3,6 +3,7 @@ package org.example.manager;
 
 import org.example.entity.Role;
 import org.example.entity.User;
+import org.example.service.AuditService;
 import org.example.service.UserService;
 
 import java.util.Scanner;
@@ -11,11 +12,12 @@ import java.util.Scanner;
 public class UserManager {
 
     private UserService userService;
+    private AuditService auditService;
 
 
-    public UserManager(UserService userService) {
+    public UserManager(UserService userService, AuditService auditService) {
         this.userService = userService;
-
+        this.auditService = auditService;
     }
 
     public void manageUser(Scanner scanner) {
@@ -42,7 +44,7 @@ public class UserManager {
         String username = scanner.nextLine();
         System.out.print("Введите пароль: ");
         String password = scanner.nextLine();
-        System.out.print("Введите роль (administrator/manager/client): ");
+        System.out.print("Введите роль (ADMINISTRATOR/MANAGER/CLIENT): ");
         String roleS = scanner.nextLine();
         Role role = Role.valueOf(roleS);
         User user = new User(username, password, role);
@@ -56,7 +58,8 @@ public class UserManager {
         System.out.print("Введите пароль: ");
         String password = scanner.nextLine();
 
-        if (userService.authenticateUser(username, password)) {
+        if (userService.authenticateUser(username, password)!=null) {
+            auditService.SetAuthId(userService.authenticateUser(username, password));
             System.out.println("Успешная авторизация.");
         } else {
             System.out.println("Неверное имя пользователя или пароль.");

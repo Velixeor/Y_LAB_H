@@ -12,32 +12,30 @@ import java.util.Optional;
 public class AdministrativeOrderService {
 
     private AdministrativeOrderRepository administrativeOrderRepository;
-    private int id;
+
     public AdministrativeOrderService(AdministrativeOrderRepository administrativeOrderRepository) {
         this.administrativeOrderRepository = administrativeOrderRepository;
-        id=0;
+
     }
 
     public void addAdministrativeOrder(AdministrativeOrder administrativeOrder) {
-        administrativeOrder.setId(id);
-        id++;
-        administrativeOrderRepository.addAdministrativeOrder(administrativeOrder);
+        administrativeOrderRepository.save(administrativeOrder);
     }
 
     public Optional<AdministrativeOrder> getAdministrativeOrderById(Integer id) {
-        return administrativeOrderRepository.getAdministrativeOrderById(id);
+        return administrativeOrderRepository.findById(id);
     }
 
     public List<AdministrativeOrder> getAllAdministrativeOrder() {
-        return administrativeOrderRepository.getAllAdministrativeOrder();
+        return administrativeOrderRepository.findAll();
     }
 
-    public boolean updateAdministrativeOrder(AdministrativeOrder updatedAdministrativeOrder) {
-        return administrativeOrderRepository.updateAdministrativeOrder(updatedAdministrativeOrder);
+    public AdministrativeOrder updateAdministrativeOrder(AdministrativeOrder updatedAdministrativeOrder) {
+        return administrativeOrderRepository.update(updatedAdministrativeOrder);
     }
 
-    public boolean deleteAdministrativeOrder(Integer id) {
-        return administrativeOrderRepository.deleteOrderService(id);
+    public void deleteAdministrativeOrder(Integer id) {
+         administrativeOrderRepository.deleteById(id);
     }
 
     public List<AdministrativeOrder> searchAdministrativeOrdersByCustomerUsername(String username) {

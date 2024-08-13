@@ -2,7 +2,7 @@ package org.example.entity;
 
 
 public enum Role {
-    administrator,
-    manager,
-    client
+    ADMINISTRATOR,
+    MANAGER,
+    CLIENT
 }

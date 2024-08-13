@@ -29,6 +29,10 @@ public class CarManager {
         System.out.println("4. Просмотреть все автомобили");
         System.out.println("5. Меню поиска");
         System.out.print("Выберите действие: ");
+        if(auditService.GetAuthId()==-1){
+            System.out.println("Вы не авторизованны");
+            return;
+        }
         String choice = scanner.nextLine();
 
         switch (choice) {
@@ -51,7 +55,8 @@ public class CarManager {
                 System.out.println("Введите число из предложенных");
         }
     }
-    private void findAllCars(Scanner scanner){
+
+    private void findAllCars(Scanner scanner) {
         System.out.println("Меню поиска автомобилей");
         System.out.println("1. По марке");
         System.out.println("2. По году выпуска");
@@ -83,6 +88,7 @@ public class CarManager {
 
 
     }
+
     private void addCar(Scanner scanner) {
         System.out.print("Марка: ");
         String brand = scanner.nextLine();
@@ -96,7 +102,7 @@ public class CarManager {
         String condition = scanner.nextLine();
         Car car = new Car(brand, model, year, price, condition);
         carService.addCar(car);
-        auditService.addAction("Добавление автомобиля", "admin");
+        auditService.addAction("Добавление автомобиля");
         System.out.println("Автомобиль добавлен.");
     }
 
@@ -117,7 +123,7 @@ public class CarManager {
             System.out.print("Новое состояние: ");
             car.setCondition(scanner.nextLine());
             carService.updateCar(car);
-            auditService.addAction("Редактирование автомобиля", "admin");
+            auditService.addAction("Редактирование автомобиля");
             System.out.println("Автомобиль обновлен.");
         } else {
             System.out.println("Автомобиль не найден.");
@@ -127,12 +133,10 @@ public class CarManager {
     private void deleteCar(Scanner scanner) {
         System.out.print("ID автомобиля: ");
         int carIdToDelete = Integer.parseInt(scanner.nextLine());
-        if (carService.deleteCar(carIdToDelete)) {
-            auditService.addAction("Удаление автомобиля", "admin");
-            System.out.println("Автомобиль удален.");
-        } else {
-            System.out.println("Автомобиль не найден.");
-        }
+        carService.deleteCar(carIdToDelete);
+        auditService.addAction("Удаление автомобиля");
+        System.out.println("Автомобиль удален.");
+
     }
 
     private void viewAllCars() {
@@ -141,45 +145,50 @@ public class CarManager {
             System.out.println(car);
         }
     }
+
     private void viewAllCarsByBrand(Scanner scanner) {
         System.out.print("Введите марку: ");
-        String brand =scanner.nextLine();
+        String brand = scanner.nextLine();
         List<Car> cars = carService.searchCarsByBrand(brand);
         for (Car car : cars) {
             System.out.println(car);
         }
     }
+
     private void viewAllCarsByYear(Scanner scanner) {
         System.out.print("Введите год: ");
-        Integer year =Integer.valueOf(scanner.nextLine());
+        Integer year = Integer.valueOf(scanner.nextLine());
         List<Car> cars = carService.searchCarsByYear(year);
         for (Car car : cars) {
             System.out.println(car);
         }
     }
+
     private void viewAllCarsByModel(Scanner scanner) {
         System.out.print("Введите модель: ");
-        String model =scanner.nextLine();
+        String model = scanner.nextLine();
         List<Car> cars = carService.searchCarsByModel(model);
         for (Car car : cars) {
             System.out.println(car);
         }
     }
+
     private void viewAllCarsByCondition(Scanner scanner) {
         System.out.print("Введите состояние: ");
 
-        String conditions =scanner.nextLine();
+        String conditions = scanner.nextLine();
         List<Car> cars = carService.searchCarsByCondition(conditions);
         for (Car car : cars) {
             System.out.println(car);
         }
     }
+
     private void viewAllCarsByPrice(Scanner scanner) {
         System.out.print("Введите верхнюю границу: ");
-        Double max =Double.valueOf(scanner.nextLine());
+        Double max = Double.valueOf(scanner.nextLine());
         System.out.print("Введите нижнюю границу : ");
-        Double min =Double.valueOf(scanner.nextLine());
-        List<Car> cars = carService.searchCarsByPrice(min,max);
+        Double min = Double.valueOf(scanner.nextLine());
+        List<Car> cars = carService.searchCarsByPrice(min, max);
         for (Car car : cars) {
             System.out.println(car);
         }
